@@ -7,6 +7,13 @@ GID ?= $(shell id -g)
 DOCKER_ARGS ?= 
 GIT_TAG ?= $(shell git log --oneline | head -n1 | awk '{print $$1}')
 
+notebooks: analysis/nz_covid_analysis.Rmd
+	$(RUN) Rscript -e 'rmarkdown::render("$<")'
+
+daemon: DOCKER_ARGS= -dit --rm -e DISPLAY=$$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix:ro --name="rdev"
+daemon:
+	$(RUN) R
+
 .PHONY: docker
 docker:
 	docker build $(DOCKER_ARGS) --tag $(IMAGE):$(GIT_TAG) .
