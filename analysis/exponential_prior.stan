@@ -5,8 +5,8 @@ data {
 
 generated quantities {
 
-  real<lower=0> alpha;
-  vector<lower=0>[N] y_prior;
+  real alpha;
+  vector[N] y_prior;
 
   alpha = normal_rng(0.2, 0.04);
 
