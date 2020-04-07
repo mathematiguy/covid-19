@@ -7,6 +7,16 @@ GID ?= $(shell id -g)
 DOCKER_ARGS ?= 
 GIT_TAG ?= $(shell git log --oneline | head -n1 | awk '{print $$1}')
 
+.PHONY: data docker docker-push docker-pull enter enter-root inspect-variables
+
+all: docker init-data data notebooks
+
+init-data:
+	$(RUN) bash -c 'cd nz-covid19-data && Rscript -e "renv::init()"'
+
+data:
+	$(RUN) bash -c 'cd nz-covid19-data && ./run.sh'
+
 notebooks: $(shell ls -d analysis/*.Rmd | sed 's/.Rmd/.html/g')
 
 analysis/%.html: analysis/%.Rmd
