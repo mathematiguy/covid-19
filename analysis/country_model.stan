@@ -6,7 +6,7 @@ data {
   // The size of the population
   int P;
   // The number of timesteps to forecast
-  int<lower=0> T;
+  int<lower=1> T;
 
 }
 parameters {
@@ -23,7 +23,7 @@ model {
   // Update the state space
   for (t in 2:N) {
     sigma_mu[t] ~ exponential(inv_logit(1. / mu[t-1]));
-    mu[t] ~ normal(inv_logit(1. / (mu[t-1])), sigma_mu[t]);
+    mu[t] ~ normal(inv_logit(1. / mu[t-1]), sigma_mu[t]);
   }
 
   for (t in 1:N) {
@@ -33,10 +33,24 @@ model {
 }
 generated quantities {
   // The posterior predictions for y
-  vector[N] y_pred;
+  vector[N+T] y_pred;
+  vector[T] mu_pred;
+  vector[T] sigma_mu_pred;
+
+  sigma_mu_pred[1] = exponential_rng(inv_logit(1. / mu[N]));
+  mu_pred[1] = normal_rng(inv_logit(1. / mu[N]), sigma_mu_pred[1]);
 
   for (t in 1:N) {
     y_pred[t] = binomial_rng(P, inv_logit(mu[t]));
+  }
+
+  for (t in 2:T) {
+    sigma_mu_pred[t] = exponential_rng(inv_logit(1. / mu_pred[t-1]));
+    mu_pred[t] = normal_rng(inv_logit(1. / mu_pred[t-1]), sigma_mu_pred[t]);
+  }
+
+  for (t in N+1:N+T) {
+    y_pred[t] = binomial_rng(P, inv_logit(mu_pred[t-N]));
   }
 
 }
