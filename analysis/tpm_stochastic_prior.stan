@@ -7,8 +7,8 @@
 */
 data {
   //declare variables
-  int<lower=0> N; //number of individuals
-  int<lower=0> T; //number of time points
+  int<lower=0> N; // number of individuals
+  int<lower=0> T; // number of time points
 }
 generated quantities {
   int<lower=0, upper=N> S[T]; //SIR
@@ -18,13 +18,13 @@ generated quantities {
   int<lower=0, upper=N> n_infected;
   int<lower=0, upper=N> n_recovered;
 
-  real<lower=0, upper=1> a;
-  real<lower=0, upper=1> b;
+  real<lower=0> a;
+  real<lower=0> b;
 
-  a = 1.;
-  b = 1.;
+  a = 0.7;
+  b = 2;
 
-  I[1] = neg_binomial_rng(10, 0.5);
+  I[1] = 100;
   S[1] = N - I[1];
   R[1] = 0;
 
