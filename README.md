@@ -1,2 +1,3 @@
-# minimal-project
-A simple template for future projects
+# covid-19
+
+Simulating covid-19 interventions with R
