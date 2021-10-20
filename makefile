@@ -1,30 +1,25 @@
-DOCKER_REGISTRY := docker.dragonfly.co.nz
-IMAGE_NAME := $(shell basename `git rev-parse --show-toplevel` | tr '[:upper:]' '[:lower:]')
-IMAGE := $(DOCKER_REGISTRY)/$(IMAGE_NAME)
-RUN ?= docker run $(DOCKER_ARGS) --rm -v $$(pwd):/work -w /work -u $(UID):$(GID) $(IMAGE)
-UID ?= $(shell id -u)
-GID ?= $(shell id -g)
-DOCKER_ARGS ?= 
+REPO_NAME := $(shell basename `git rev-parse --show-toplevel` | tr '[:upper:]' '[:lower:]')
 GIT_TAG ?= $(shell git log --oneline | head -n1 | awk '{print $$1}')
+DOCKER_REGISTRY := mathematiguy
+IMAGE := $(DOCKER_REGISTRY)/$(REPO_NAME)
+HAS_DOCKER ?= $(shell which docker)
+RUN ?= $(if $(HAS_DOCKER), docker run $(DOCKER_ARGS) --rm -v $$(pwd):/home/kaimahi/$(REPO_NAME) -w /home/kaimahi/$(REPO_NAME) -u $(UID):$(GID) $(IMAGE))
+UID ?= kaimahi
+GID ?= kaimahi
+DOCKER_ARGS ?=
 
-.PHONY: data docker docker-push docker-pull enter enter-root inspect-variables
+.PHONY: docker docker-push docker-pull enter enter-root
 
-all: docker init-data data notebooks
+replicate:
+	$(RUN) julia replicate.jl
 
-init-data:
-	$(RUN) bash -c 'cd nz-covid19-data && Rscript -e "renv::init()"'
+PLUTO_PORT ?=1234
+pluto: DOCKER_ARGS=-p $(PLUTO_PORT):$(PLUTO_PORT) -it
+pluto:
+	$(RUN) julia -e 'import Pluto; Pluto.run(host="0.0.0.0", require_secret_for_open_links=false, require_secret_for_access=false, port=$(PLUTO_PORT))'
 
-data:
-	$(RUN) bash -c 'cd nz-covid19-data && ./run.sh'
-
-notebooks: $(shell ls -d analysis/*.Rmd | sed 's/.Rmd/.html/g')
-
-analysis/%.html: analysis/%.Rmd
-	$(RUN) Rscript -e 'rmarkdown::render("$<")'
-
-daemon: DOCKER_ARGS= -dit --rm -e DISPLAY=$$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix:ro --name="rdev"
-daemon:
-	$(RUN) R
+clean:
+	find . -name '*backup*.jl' | xargs -I{} rm "{}"
 
 docker:
 	docker build $(DOCKER_ARGS) --tag $(IMAGE):$(GIT_TAG) .
@@ -47,13 +42,3 @@ enter-root: UID=root
 enter-root: GID=root
 enter-root:
 	$(RUN) bash
-
-inspect-variables:
-	@echo DOCKER_REGISTRY: $(DOCKER_REGISTRY)
-	@echo IMAGE_NAME:      $(IMAGE_NAME)
-	@echo IMAGE:           $(IMAGE)
-	@echo RUN:             $(RUN)
-	@echo UID:             $(UID)
-	@echo GID:             $(GID)
-	@echo DOCKER_ARGS:     $(DOCKER_ARGS)
-	@echo GIT_TAG:         $(GIT_TAG)

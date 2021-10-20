@@ -1,36 +1,37 @@
-FROM rocker/tidyverse
+FROM julia:1.7.0-rc1-buster
 
-ENV DEBIAN_FRONTEND noninteractive
+# Use New Zealand mirrors
+RUN sed -i 's/archive/nz.archive/' /etc/apt/sources.list
+
+RUN apt update
+
+# Set timezone to Auckland
+ARG DEBIAN_FRONTEND=noninteractive
+RUN apt-get install -y locales tzdata git
+RUN locale-gen en_NZ.UTF-8
+RUN dpkg-reconfigure locales
+RUN echo "Pacific/Auckland" > /etc/timezone
+RUN dpkg-reconfigure -f noninteractive tzdata
 ENV LANG en_NZ.UTF-8
 ENV LANGUAGE en_NZ:en
 
-# Set New Zealand mirrors and set timezone to Auckland
-RUN sed -i 's/archive/nz.archive/' /etc/apt/sources.list
-RUN apt-get update
-RUN apt-get install -y tzdata
-RUN echo "Pacific/Auckland" > /etc/timezone
-RUN dpkg-reconfigure -f noninteractive tzdata
+# Create user 'kaimahi' to create a home directory
+RUN useradd kaimahi
+RUN mkdir -p /home/kaimahi/
+RUN chown -R kaimahi:kaimahi /home/kaimahi
+ENV HOME /home/kaimahi
 
-# Set the locale to New Zealand
-RUN apt-get -y install locales
-RUN locale-gen en_NZ.UTF-8
+# Install python + other things
+RUN apt update
 
-RUN dpkg-reconfigure locales
+# Install python + other things
+RUN apt update
+RUN apt install -y python3-dev python3-pip
 
-RUN apt-get update && \
-  apt upgrade --yes && \
-  apt-get autoremove -y && \
-  apt-get clean && \
-  rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
-
-RUN apt update && apt install -y libxt-dev
-
-RUN Rscript -e 'install.packages("rstan")'
-RUN Rscript -e 'install.packages("wbstats")'
-RUN Rscript -e 'install.packages("here")'
-RUN Rscript -e 'install.packages("furrr")'
-RUN Rscript -e 'install.packages("remotes")'
-RUN Rscript -e 'remotes::install_github("GuangchuangYu/nCov2019")'
-RUN Rscript -e 'install.packages("prettydoc")'
-RUN Rscript -e 'install.packages("brms")'
-RUN Rscript -e 'install.packages("drake")'
+# Install julia packages
+USER kaimahi
+RUN julia -e 'using Pkg; Pkg.add("Pluto")'
+RUN julia -e 'using Pkg; Pkg.add("LinearAlgebra")'
+RUN julia -e 'using Pkg; Pkg.add("XLSX")'
+RUN julia -e 'using Pkg; Pkg.add("DataFrames")'
+RUN julia -e 'using Pkg; Pkg.add("CSV")'
