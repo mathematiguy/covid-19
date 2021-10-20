@@ -1,4 +1,4 @@
-FROM julia:1.7.0-rc1-buster
+FROM julia:1.6.1
 
 # Use New Zealand mirrors
 RUN sed -i 's/archive/nz.archive/' /etc/apt/sources.list
@@ -21,8 +21,9 @@ RUN mkdir -p /home/kaimahi/
 RUN chown -R kaimahi:kaimahi /home/kaimahi
 ENV HOME /home/kaimahi
 
-# Install python + other things
+# Install apt packages
 RUN apt update
+RUN apt install -y gettext libcairo2 libpango1.0-0
 
 # Install python + other things
 RUN apt update
@@ -31,7 +32,18 @@ RUN apt install -y python3-dev python3-pip
 # Install julia packages
 USER kaimahi
 RUN julia -e 'using Pkg; Pkg.add("Pluto")'
-RUN julia -e 'using Pkg; Pkg.add("LinearAlgebra")'
-RUN julia -e 'using Pkg; Pkg.add("XLSX")'
-RUN julia -e 'using Pkg; Pkg.add("DataFrames")'
-RUN julia -e 'using Pkg; Pkg.add("CSV")'
+RUN julia -e 'using Pkg; Pkg.add([ \
+  Pkg.PackageSpec(name="BenchmarkTools", version="1.0.0"), \
+  Pkg.PackageSpec(name="CSV", version="0.8.5"), \
+  Pkg.PackageSpec(name="Chain", version="0.4.6"), \
+  Pkg.PackageSpec(name="DataFrames", version="1.1.1"), \
+  Pkg.PackageSpec(name="DifferentialEquations", version="6.17.1"), \
+  Pkg.PackageSpec(name="Distributions", version="0.24.18"), \
+  Pkg.PackageSpec(name="LaTeXStrings", version="1.2.1"), \
+  Pkg.PackageSpec(name="LazyArrays", version="0.21.5"), \
+  Pkg.PackageSpec(name="Plots", version="1.16.2"), \
+  Pkg.PackageSpec(name="PlutoUI", version="0.7.9"), \
+  Pkg.PackageSpec(name="StatsBase", version="0.33.8"), \
+  Pkg.PackageSpec(name="StatsPlots", version="0.14.21"), \
+  Pkg.PackageSpec(name="Turing", version="0.16.0") \
+  ])'
