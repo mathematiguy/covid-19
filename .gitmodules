@@ -1,3 +1,6 @@
 [submodule "nz-covid19-data"]
 	path = nz-covid19-data
 	url = git@github.com:nzherald/nz-covid19-data.git
+[submodule "nz-covid19-data-auto"]
+	path = nz-covid19-data-auto
+	url = git@github.com:UoA-eResearch/nz-covid19-data-auto.git
