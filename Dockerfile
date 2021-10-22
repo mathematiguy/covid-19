@@ -47,3 +47,29 @@ RUN julia -e 'using Pkg; Pkg.add([ \
   Pkg.PackageSpec(name="StatsPlots", version="0.14.21"), \
   Pkg.PackageSpec(name="Turing", version="0.16.0") \
   ])'
+
+# Install R package dependencies
+USER root
+RUN apt update && apt install -y \
+  libcurl4-openssl-dev \
+  libssl-dev \
+  libxml2-dev \
+  libfontconfig1-dev \
+  libmagick++-dev \
+  cargo \
+  libharfbuzz-dev \
+  libfribidi-dev \
+  desktop-file-utils \
+  libudunits2-dev \
+  gdal-bin \
+  libzmq3-dev \
+  wget
+
+# install pandoc
+RUN wget https://github.com/jgm/pandoc/releases/download/2.5/pandoc-2.5-1-amd64.deb -P /root
+RUN dpkg -i /root/pandoc-2.5-1-amd64.deb
+
+# Install R
+RUN apt install -y r-base
+
+RUN Rscript -e 'install.packages(c("tidyverse", "devtools", "drake", "bookdown", "kableExtra", "here", "reticulate", "furrr", "optparse", "shiny"), repos = "https://cran.stat.auckland.ac.nz", Ncpus=parallel::detectCores()-1, dependencies=TRUE)'

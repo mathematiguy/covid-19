@@ -18,6 +18,10 @@ pluto: DOCKER_ARGS=-p $(PLUTO_PORT):$(PLUTO_PORT) -it
 pluto:
 	$(RUN) julia -e 'import Pluto; Pluto.run(host="0.0.0.0", require_secret_for_open_links=false, require_secret_for_access=false, port=$(PLUTO_PORT))'
 
+r_shell: DOCKER_ARGS= -dit --rm -e DISPLAY=$$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix:ro --name="rdev"
+r_shell:
+	$(RUN) R
+
 clean:
 	find . -name '*backup*.jl' | xargs -I{} rm "{}"
 

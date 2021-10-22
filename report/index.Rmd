@@ -1,0 +1,16 @@
+---
+title: "Covid-19 analysis"
+author: "Caleb Moses"
+date: "`r format(Sys.Date(), '%d %B %Y')`"
+knit: "bookdown::render_book"
+output:
+    bookdown::gitbook:
+        self_contained: false
+        pandoc_args: ["--verbose", "--log=pandoc.log"]
+documentclass: book
+link-citations: yes
+github-repo: mathematiguy/covid-19
+description: "This report analyses publicly available covid 19 data"
+---
+
+

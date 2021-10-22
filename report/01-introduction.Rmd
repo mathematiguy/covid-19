@@ -1,0 +1,51 @@
+---
+title: "Covid-19 analysis"
+author: "Caleb Moses"
+date: "`r format(Sys.Date(), '%d %B %Y')`"
+knit: "bookdown::render_book"
+output:
+    bookdown::gitbook:
+        self_contained: false
+        pandoc_args: ["--verbose", "--log=pandoc.log"]
+documentclass: book
+link-citations: yes
+github-repo: mathematiguy/covid-19
+description: "This report analyses publicly available covid 19 data"
+---
+
+# Introduction
+
+```{r}
+
+library(here)
+library(tidyverse)
+library(data.table)
+
+```
+
+```{r}
+
+cases <- read_csv(here('nz-covid19-data-auto/data.csv'))
+cases_by_DHB <- fread(here('nz-covid19-data-auto/cases_by_DHB.csv'))
+cases_by_DHB_over_time <- read_csv(here('nz-covid19-data-auto/cases_by_DHB_over_time.csv'))
+
+```
+
+I want to build an SIR model for the covid 19 response but I need the right data in order to do it.
+
+To get started I need the following datasets:
+
+- NZ Population by region + ethnicity + age
+- Daily case counts by region + ethnicity (at least) + age (preferably) [check]
+- Hospitalisations by region + ethnicity (at least) + age (preferably)
+- Deaths by region + ethnicity (at least) + age (preferably)
+
+```{r}
+
+cases %>%
+    group_by(`Report Date`) %>%
+    count() %>%
+    ggplot(aes(x = `Report Date`, y = n)) +
+    geom_line()
+
+```
