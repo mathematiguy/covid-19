@@ -21,6 +21,20 @@ library(here)
 library(tidyverse)
 library(data.table)
 
+source(here('R/get_odata_fun.R'), local=TRUE)
+source(here('R/get_odata_catalogue_fun.R'), local=TRUE)
+options(tibble.width = Inf, mc.cores = parallel::detectCores()-1)
+
+# Set default ggplot theme
+theme_set(
+    theme_minimal() +
+    theme(plot.title = element_text(hjust = 0.5)) +
+    theme(text = element_text(size = 20))
+)
+
+# Set notebook options
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE, progress=TRUE, verbose=TRUE, cache.extra = knitr::rand_seed)
+
 ```
 
 ```{r}
@@ -49,3 +63,27 @@ cases %>%
     geom_line()
 
 ```
+
+```{r}
+
+
+Catalogue <- get_odata_catalogue(
+    service="https://api.stats.govt.nz/opendata/v1",
+    endpoint="data.json",
+    service_api_key = ""
+)
+
+
+```
+
+```{r}
+
+response = get_odata(
+    service = "https://api.stats.govt.nz/opendata/v1",
+    endpoint = "Covid-19Indicators",
+    entity = "Observations",
+    query_option = "ResourceID=CPCOV5.0&Stop=10",
+    service_api_key = ""
+)
+
+````
