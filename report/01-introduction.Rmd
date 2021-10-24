@@ -51,4 +51,21 @@ To get started I need the following datasets:
 
 ```{r}
 
+cases_by_dhb_over_time <- read_csv(here('nz-covid19-data-auto/cases_by_DHB_over_time.csv'))
+
+cases_by_dhb_over_time %>%
+    gather(Active:Total, key = 'Compartment', value = 'Count') %>%
+    ggplot(aes(x = Date, y = Count, colour = Compartment)) +
+    facet_wrap(~DHB, scales='free_y') +
+    geom_line()
+
+cases_by_dhb_over_time %>%
+    filter(Region == "Auckland") %>%
+    ggplot(aes(x = Date, y = `Daily total cases`)) +
+    geom_line()
+
+cases_by_dhb_over_time %>%
+    filter(Region == "Auckland") %>%
+    tail()
+
 ```
