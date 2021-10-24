@@ -17,6 +17,7 @@ description: "This report analyses publicly available covid 19 data"
 
 ```{r}
 
+library(yaml)
 library(here)
 library(tidyverse)
 library(data.table)
@@ -24,6 +25,8 @@ library(data.table)
 source(here('R/get_odata_fun.R'), local=TRUE)
 source(here('R/get_odata_catalogue_fun.R'), local=TRUE)
 options(tibble.width = Inf, mc.cores = parallel::detectCores()-1)
+
+credentials = read_yaml(here('credentials.yaml'))
 
 # Set default ggplot theme
 theme_set(
@@ -34,14 +37,6 @@ theme_set(
 
 # Set notebook options
 knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE, progress=TRUE, verbose=TRUE, cache.extra = knitr::rand_seed)
-
-```
-
-```{r}
-
-cases <- read_csv(here('nz-covid19-data-auto/data.csv'))
-cases_by_DHB <- fread(here('nz-covid19-data-auto/cases_by_DHB.csv'))
-cases_by_DHB_over_time <- read_csv(here('nz-covid19-data-auto/cases_by_DHB_over_time.csv'))
 
 ```
 
@@ -56,34 +51,4 @@ To get started I need the following datasets:
 
 ```{r}
 
-cases %>%
-    group_by(`Report Date`) %>%
-    count() %>%
-    ggplot(aes(x = `Report Date`, y = n)) +
-    geom_line()
-
 ```
-
-```{r}
-
-
-Catalogue <- get_odata_catalogue(
-    service="https://api.stats.govt.nz/opendata/v1",
-    endpoint="data.json",
-    service_api_key = ""
-)
-
-
-```
-
-```{r}
-
-response = get_odata(
-    service = "https://api.stats.govt.nz/opendata/v1",
-    endpoint = "Covid-19Indicators",
-    entity = "Observations",
-    query_option = "ResourceID=CPCOV5.0&Stop=10",
-    service_api_key = ""
-)
-
-````
