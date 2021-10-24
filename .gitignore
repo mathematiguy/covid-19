@@ -1,3 +1,4 @@
 analysis/*.rds
 analysis/*.html
 research/*
+/credentials.yaml
