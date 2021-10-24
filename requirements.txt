@@ -1,6 +1,5 @@
 ipython
 jupyter
 jupyterlab
-pygit2
 pandas
 matplotlib
