@@ -54,36 +54,4 @@ Then we can chuck it into julia and see what we can do there.
 
 ```{r}
 
-cases_by_dhb_over_time <- read_csv(here('nz-covid19-data-auto/cases_by_DHB_over_time.csv'))
-
-auckland_cases <- cases_by_dhb_over_time %>%
-    filter(DHB=='Auckland' & Date > as.Date('2021-08-10')) %>%
-
-write_csv(auckland_cases, here('data/auckland_cases.csv'))
-
-```
-
-```{r}
-
-
-# Get the SIR model data
-testing_data <-  Filter(
-    function(x)!all(is.na(x)),
-    get_odata(
-        service = "https://api.stats.govt.nz/opendata/v1",
-        endpoint = "Covid-19Indicators",
-        entity = "Observations",
-        query_option = "$filter=(
-                     ResourceID eq 'CPCOV1' and
-                     Period ge 2021-08-10
-                   )
-            &$select=Period,Label1,Value",
-        service_api_key = credentials$stats_nz_api_key)) %>%
-    as_tibble() %>%
-    rename(Count = Value,
-           Day = Period)
-
-testing_data %>%
-    write_csv(here('data/testing.csv'))
-
 ```
