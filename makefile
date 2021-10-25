@@ -10,6 +10,12 @@ DOCKER_ARGS ?=
 
 .PHONY: docker docker-push docker-pull enter enter-root
 
+data/auckland_cases.csv: R/load_auckland_case_data.R nz-covid19-data-auto/cases_by_DHB_over_time.csv
+	$(RUN) Rscript $< \
+		--case_data nz-covid19-data-auto/cases_by_DHB_over_time.csv \
+		--output $@ \
+		--credentials credentials.yaml
+
 replicate:
 	$(RUN) julia replicate.jl
 
