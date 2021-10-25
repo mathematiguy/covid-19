@@ -56,9 +56,10 @@ Then we can chuck it into julia and see what we can do there.
 
 cases_by_dhb_over_time <- read_csv(here('nz-covid19-data-auto/cases_by_DHB_over_time.csv'))
 
-cases_by_dhb_over_time %>%
+auckland_cases <- cases_by_dhb_over_time %>%
     filter(DHB=='Auckland' & Date > as.Date('2021-08-10')) %>%
-    write_csv(here('data/auckland_cases.csv'))
+
+write_csv(auckland_cases, here('data/auckland_cases.csv'))
 
 ```
 
