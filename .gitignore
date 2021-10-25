@@ -3,3 +3,4 @@ analysis/*.html
 research/*
 /credentials.yaml
 **/.ipynb_checkpoints
+**/.#*
