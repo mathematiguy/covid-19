@@ -31,14 +31,13 @@ Catalogue <- get_odata_catalogue(
     service_api_key = credentials$stats_nz_api_key
 )
 
-# Using the first accessURL from the cataloge, find the entities in the
-# service data model
+# List the available covid 19 indicators
 ServiceEntities <-  Filter(
     function(x)!all(is.na(x)),
     get_odata(
          service = "https://api.stats.govt.nz/opendata/v1",
-         endpoint = "EmploymentIndicators",
-         entity = "",
+         endpoint = "Covid-19Indicators",
+         entity = "Resources",
          query_option = "",
         service_api_key = credentials$stats_nz_api_key
     )
