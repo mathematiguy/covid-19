@@ -44,7 +44,7 @@ main <- function() {
                 &$select=Period,Label1,Value",
             service_api_key = credentials$stats_nz_api_key)) %>%
         as_tibble() %>%
-        rename(Count = Value,
+        rename(Tests = Value,
                Date = Period) %>%
         mutate(Date = as.Date(Date))
 
