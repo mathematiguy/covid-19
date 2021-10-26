@@ -19,6 +19,7 @@ description: "This report analyses publicly available covid 19 data"
 
 library(yaml)
 library(here)
+library(rstan)
 library(tidyverse)
 library(data.table)
 
@@ -53,5 +54,64 @@ Lets start this by selecting a simple subset of the data that will be easier to 
 Then we can chuck it into julia and see what we can do there.
 
 ```{r}
+
+auckland_cases <- read_csv(here('data/auckland_cases.csv'))
+
+# Select a subsample of data where it looks like an SIR model would apply
+sir_data <- auckland_cases %>%
+    filter(Date < as.Date('2021-09-21')) %>%
+    mutate(S = 5000000 - Total,
+           I = Active,
+           R = Recovered + Deceased) %>%
+    select(Date, S, I, R)
+
+sir_data %>%
+    gather(S:R, key = 'Compartment', value = 'Count') %>%
+    mutate(Compartment = factor(Compartment, levels = c('S', 'I', 'R'))) %>%
+    ggplot(aes(x = Date, y = Count, colour = Compartment)) +
+    geom_line() +
+    facet_wrap(~Compartment, ncol = 1, scales = 'free_y')
+
+```
+
+```{r}
+
+# time series of cases
+cases <- sir_data$I
+
+# total count
+N <- 5000000;
+
+# times
+n_days <- as.numeric(sir_data$Date[nrow(sir_data)] - sir_data$Date[1])
+t <- seq(0, n_days, by = 1)
+t0 = 0
+t <- t[-1]
+
+#initial conditions
+i0 <- 1
+s0 <- N - i0
+r0 <- sir_data$R[1]
+y0 = c(S = s0, I = i0, R = r0)
+
+# data for Stan
+data_sir <- list(n_days = n_days, y0 = y0, t0 = t0, ts = t, N = N, cases = cases)
+
+# number of MCMC steps
+niter <- 2000
+
+```
+
+```{r}
+
+# Compile the model
+model <- stan_model(here("stan/sir_model.stan"))
+
+fit_sir_negbin <- sampling(
+    model,
+    data = data_sir,
+    iter = niter,
+    chains = 1,
+    seed = 0)
 
 ```
