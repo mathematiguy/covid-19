@@ -26,11 +26,8 @@ cases = readtimearray("../data/auckland_cases.csv", format="yyyy-mm-dd", delim='
 # ╔═╡ f17abb72-99fd-4917-a442-29f3a7b8b167
 plot(cases[:Active, :Recovered, :Deceased])
 
-# ╔═╡ 0562faeb-8446-4ba4-88fd-53dceccd5217
-testing = readtimearray("../data/testing.csv", format="yyyy-mm-dd", delim=',')
-
 # ╔═╡ 8428dbb3-7c42-4ad9-b4c9-cfa489552c2c
-plot(testing[:Count], formatter=identity)
+plot(cases[:Tests], formatter=identity)
 
 # ╔═╡ 8e1cf331-7f6f-4e7c-a2f0-3aaa0b49ede7
 md"""
@@ -1218,11 +1215,10 @@ version = "0.9.1+5"
 """
 
 # ╔═╡ Cell order:
-# ╠═e3ec38c5-24d0-4432-949d-49b165c18368
+# ╟─e3ec38c5-24d0-4432-949d-49b165c18368
 # ╟─73d3ca3e-32e4-11ec-0e24-d129eab75b6b
-# ╟─7a25e38b-2b5b-49a9-906c-3e0b453dcd06
+# ╠═7a25e38b-2b5b-49a9-906c-3e0b453dcd06
 # ╠═f17abb72-99fd-4917-a442-29f3a7b8b167
-# ╟─0562faeb-8446-4ba4-88fd-53dceccd5217
 # ╠═8428dbb3-7c42-4ad9-b4c9-cfa489552c2c
 # ╟─8e1cf331-7f6f-4e7c-a2f0-3aaa0b49ede7
 # ╟─89d28060-6b85-4e0c-9ee7-2b958f6cb6b2
