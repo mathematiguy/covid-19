@@ -48,8 +48,16 @@ RUN julia -e 'using Pkg; Pkg.add([ \
   Pkg.PackageSpec(name="Turing", version="0.16.0") \
   ])'
 
-# Install R package dependencies
+# Install Python
 USER root
+RUN apt update
+RUN python3 -m pip install --upgrade pip
+RUN pip3 install wheel
+
+COPY requirements.txt /root/requirements.txt
+RUN pip3 install -r /root/requirements.txt
+
+# Install R package dependencies
 RUN apt update && apt install -y \
   libcurl4-openssl-dev \
   libssl-dev \
@@ -72,12 +80,5 @@ RUN dpkg -i /root/pandoc-2.5-1-amd64.deb
 # Install R
 RUN apt install -y r-base
 
-RUN Rscript -e 'install.packages(c("tidyverse", "devtools", "drake", "bookdown", "kableExtra", "here", "reticulate", "furrr", "optparse", "shiny"), repos = "https://cran.stat.auckland.ac.nz", Ncpus=parallel::detectCores()-1, dependencies=TRUE)'
-
-# Install Python
-RUN apt update
-RUN python3 -m pip install --upgrade pip
-RUN pip3 install wheel
-
-COPY requirements.txt /root/requirements.txt
-RUN pip3 install -r /root/requirements.txt
+ENV DOWNLOAD_STATIC_LIBV8=1
+RUN Rscript -e 'install.packages(c("tidyverse", "devtools", "drake", "bookdown", "kableExtra", "here", "reticulate", "furrr", "optparse", "shiny", "rstan"), repos = "https://cran.stat.auckland.ac.nz", Ncpus=parallel::detectCores()-1, dependencies=TRUE)'
