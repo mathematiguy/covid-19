@@ -36,6 +36,8 @@ theme_set(
     theme(text = element_text(size = 20))
 )
 
+options(mc.cores=parallel::detectCores()-1)
+
 # Set notebook options
 knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE, progress=TRUE, verbose=TRUE, cache.extra = knitr::rand_seed)
 
@@ -97,9 +99,6 @@ y0 = c(S = s0, I = i0, R = r0)
 # data for Stan
 data_sir <- list(n_days = n_days, y0 = y0, t0 = t0, ts = t, N = N, cases = cases)
 
-# number of MCMC steps
-niter <- 2000
-
 ```
 
 ```{r}
@@ -110,8 +109,15 @@ model <- stan_model(here("stan/sir_model.stan"))
 fit_sir_negbin <- sampling(
     model,
     data = data_sir,
-    iter = niter,
-    chains = 1,
+    iter = 2000,
+    chains = 4,
     seed = 0)
+
+pars = c('beta', 'gamma', "phi_inv", "R0", "recovery_time")
+print(fit_sir_negbin, pars = pars)
+
+traceplot(fit_sir_negbin, pars = pars)
+
+stan_dens(fit_sir_negbin, pars = pars, separate_chains = TRUE)
 
 ```
