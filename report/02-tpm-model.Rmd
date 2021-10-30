@@ -1,0 +1,81 @@
+---
+title: "Covid-19 analysis"
+author: "Caleb Moses"
+date: "`r format(Sys.Date(), '%d %B %Y')`"
+knit: "bookdown::render_book"
+output:
+  bookdown::gitbook:
+    self_contained: false
+    pandoc_args: ["--verbose", "--log=pandoc.log"]
+documentclass: book
+link-citations: yes
+github-repo: mathematiguy/covid-19
+description: "This report analyses publicly available covid 19 data"
+---
+
+# Te Punaha Matatini's Age-structured transmission model
+
+The goal of this notebook is to replicate the TPM model reported in [this paper](https://cpb-ap-se2.wpmucdn.com/blogs.auckland.ac.nz/dist/d/75/files/2017/01/modelling-the-august-2021-outbreak.pdf).
+
+Te Punaha Matatini's used a branching process model to simulate the August 2021 outbreak 
+through to early January 2022.
+
+The number of people in age group $j$ infected by clinical individual $I$ between time $t$ and $t + \delta t$ is a Poisson distributed random variable with mean:
+
+$$ \lambda_{l,j}(t) = Y_l \cdot C(t) \cdot V_l(t) \cdot F_l(t) \cdot \left( \int_t^{t+\delta t} w(\tau - t_{inf,l}) d\tau \right) NGM_{j,a_l}^{clin} s_j(t)$$
+
+The expression for $\lambda_{l,j}(t)$ above is multiplied by $\tau$ if individual $l$ is subclinical. Note that the factor $Y_l$ means that, in the absence of control measures, the total number of people infected by a randomly selected individual has a negative binomial distribution with mean $R_0$ and variance $R_0(1 + 𝑅_0 / 𝑘)$
+
+### Model parameters
+
+- $Y_l \sim \textrm{Gamma}(0.5, 2)$ is a gamma distributed random variable with mean 1 and variance $1/k$ representing 
+individual heterogeneity in transmission. We set $k$ = 0.5 which represents a moderate level of over-dispersion and is consistent with estimates for SARS-CoV-2 transmission patterns.
+- $C(t)$ is a time varying control parameter that is fitted to data.
+- $V_l(t)$ represents the effect of vaccination on the transmission rate of individual $l$, and is equal to 1, 1 − $e_{T1}$, or 1 − $e_{T2}$ if individual $l$ is unvaccinated, has had one dose, or has had two doses respectively at time $t$.
+- $F_l(t)$ represents the effect of quarantine or isolation on the transmission rate of individual $l$ at time $t$, and is equal to 1 if individual $l$ is not in quarantine/isolation at time $t$, equal to $c_{quar}$ = 0.5 if individual $l$ is in quarantine, and equal to $c_{isol}$ if individual $l$ is in isolation.
+- $w(\tau)$ is the probability density function of the assumed generation time distribution and $t_{inf,l}$ is the time individual $l$ was infected
+- $NGM^{clin}$ is the next generation matrix for clinical individuals and $a_l$ is the age group 
+of individual $l$.
+- $s_j(t)$ is the fraction of age group $j$ that is susceptible at time $t$, defined by: $$ s_j(t) = 1 - e_{l1}c_{j1}(t) - e_{l2}c_{j2}(t) - \frac{N_j(t)}{N_{j,tot}} $$ where $c_{jd}(t)$ is the fraction of age group $j$ that has received $d$ effective doses of the vaccine at time $t$, $N_j(t)$ is the cumulative number of infections in age group $j$ at time $t$ and $N_{j,tot}$ is the total size of age group $j$.
+
+### Vaccination status
+
+The vaccination status of new infections in age group 𝑗 at time 𝑡 is assigned to be 0, 1 or 2 
+doses with respective probabilities:
+
+$$
+\begin{align*}
+  q_{j0}(t) &= \frac{1-c_{j1}(t)-c_{j2}(t)}{1-{e_{l1}c_{j1}(t)-e_{l2}c_{j2}(t)}} \\ 
+  q_{j1}(t) &= \frac{(1-e_{l1}c_{j1}(t))}{1-{e_{l1}c_{j1}(t)-e_{l2}c_{j2}(t)}} \\
+  q_{j2}(t) &= \frac{(1-e_{l2}c_{j2}(t))}{1-{e_{l1}c_{j1}(t)-e_{l2}c_{j2}(t)}}
+\end{align*}
+$$
+
+This models the effect of the vaccine as completely immunising a randomly selected fraction $e_{ld}$  of  individuals  with $d$ doses  and  leaving  the  remaining  fraction $1-e_{ld}$ completely susceptible. This is known as an all-or-nothing vaccine model and is a simplification of the effect of vaccination on susceptibility to infection.
+
+An alternative model formulation is a leaky  vaccine  model,  where  all  vaccinated  individuals  have  their  probability  of  infection reduced by $e_l$. Reality is likely to be somewhere between these idealised models (i.e. there is some individual heterogeneity in the level of protection provided by the vaccine but not as extreme as all-or-nothing).
+
+However, the all-or-nothing and the leaky vaccine model behave similarly when the proportion of the population with immunity from prior infection is relatively small. Waning of immunity from either vaccination or from prior infection is ignored. 
+
+### Next generation matrix
+
+Transmission between age groups is described by a next generation matrix, whose (𝑖, 𝑗)th
+element is defined to be the expected number of secondary infections in age group 𝑖 caused 
+by an infected individual in age group 𝑗 in the absence of control measures and given a fully 
+susceptible population:
+
+$$ NGM_ij = U( p_{clin,j} + \tau (1 - p_{clin,j})) \cdot u_i M_{j,i} $$
+
+where $u_i$ is the relative susceptibility to infection of age group  $i$, $M$ is a contact matrix 
+describing mixing rates between and within age groups, $U$ is a constant representing the 
+intrinsic transmissibility of the virus. The basic reproduction number $R_0$ is equal to the 
+dominant eigenvalue of the next generation matrix, denoted $\rho(NGM)$. The value of $U$ is 
+chosen so that $\rho(NGM)$ is equal to the assumed value of $R_0$ = 6.
+
+The expected number of secondary infections in age group $𝑖$ caused by an infected individual in age group $𝑗$ in the absence of any control measures other than vaccination is: 
+
+$$ NGM_{ij}^v(t) = \left( 1 - e_{T1}q_{j1}(t) - e_{T2}q_{j2}(t) \right) \left( 1 - e_{l1}c_{i1}(t) - e_{l2}c_{i2}(t) \right) \cdot NGM_{ij} $$
+
+### Seed cases
+
+Outbreaks are initialised by seeding 135 infections uniformly distributed between 10 August and 17 August. The number of seed infections was chosen based on previous calibration of the model to data on the number of new daily cases in the early stages of the outbreak.
