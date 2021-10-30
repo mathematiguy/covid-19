@@ -15,7 +15,7 @@ description: "This report analyses publicly available covid 19 data"
 
 # Introduction
 
-```{r}
+```{r import-libraries, message=FALSE, echo=FALSE}
 
 library(yaml)
 library(here)
@@ -55,7 +55,7 @@ To get started I need the following datasets:
 Lets start this by selecting a simple subset of the data that will be easier to analyse. 
 Then we can chuck it into julia and see what we can do there.
 
-```{r}
+```{r load-case-data}
 
 auckland_cases <- read_csv(here('data/auckland_cases.csv'))
 
@@ -72,11 +72,12 @@ sir_data %>%
     mutate(Compartment = factor(Compartment, levels = c('S', 'I', 'R'))) %>%
     ggplot(aes(x = Date, y = Count, colour = Compartment)) +
     geom_line() +
-    facet_wrap(~Compartment, ncol = 1, scales = 'free_y')
+    facet_wrap(~Compartment, ncol = 1, scales = 'free_y') +
+    guides(colour=FALSE)
 
 ```
 
-```{r}
+```{r prepare-stan-model}
 
 # time series of cases
 cases <- sir_data$I
@@ -101,17 +102,15 @@ data_sir <- list(n_days = n_days, y0 = y0, t0 = t0, ts = t, N = N, cases = cases
 
 ```
 
-```{r}
+```{r fit-the-model}
 
-# Compile the model
-model <- stan_model(here("stan/sir_model.stan"))
+fit_sir_negbin <- read_rds(here('stan/sir_model.rds'))
 
-fit_sir_negbin <- sampling(
-    model,
-    data = data_sir,
-    iter = 2000,
-    chains = 4,
-    seed = 0)
+```
+
+## Model metrics
+
+```{r model-metrics}
 
 pars = c('beta', 'gamma', "phi_inv", "R0", "recovery_time")
 print(fit_sir_negbin, pars = pars)
@@ -121,3 +120,5 @@ traceplot(fit_sir_negbin, pars = pars)
 stan_dens(fit_sir_negbin, pars = pars, separate_chains = TRUE)
 
 ```
+
+This model is not a very good fit!

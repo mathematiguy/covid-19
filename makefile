@@ -10,6 +10,12 @@ DOCKER_ARGS ?=
 
 .PHONY: docker docker-push docker-pull enter enter-root
 
+stan/sir_model.rds: R/fit_stan_model.R data/auckland_cases.csv stan/sir_model.stan
+	$(RUN) Rscript $< \
+		--case_data data/auckland_cases.csv \
+		--model_code stan/sir_model.stan \
+		--model_path $@
+
 data/auckland_cases.csv: R/load_auckland_case_data.R nz-covid19-data-auto/cases_by_DHB_over_time.csv
 	$(RUN) Rscript $< \
 		--case_data nz-covid19-data-auto/cases_by_DHB_over_time.csv \
@@ -18,6 +24,10 @@ data/auckland_cases.csv: R/load_auckland_case_data.R nz-covid19-data-auto/cases_
 
 replicate:
 	$(RUN) julia replicate.jl
+
+report: _book/_main.html
+_book/_main.html: report/index.Rmd stan/sir_model.rds
+	$(RUN) Rscript -e 'bookdown::render_book("$<")'
 
 JUPYTER_PASSWORD ?= jupyter
 JUPYTER_PORT ?= 8888
@@ -44,6 +54,7 @@ r_shell:
 	$(RUN) R
 
 clean:
+	rm _main.Rmd
 	find . -name '*backup*.jl' | xargs -I{} rm "{}"
 
 docker:
