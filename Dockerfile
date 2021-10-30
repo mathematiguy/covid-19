@@ -71,7 +71,8 @@ RUN apt update && apt install -y \
   libudunits2-dev \
   gdal-bin \
   libzmq3-dev \
-  wget
+  wget \
+  g++
 
 # install pandoc
 RUN wget https://github.com/jgm/pandoc/releases/download/2.5/pandoc-2.5-1-amd64.deb -P /root
@@ -81,4 +82,5 @@ RUN dpkg -i /root/pandoc-2.5-1-amd64.deb
 RUN apt install -y r-base
 
 ENV DOWNLOAD_STATIC_LIBV8=1
+ENV LC_ALL=C.UTF-8
 RUN Rscript -e 'install.packages(c("tidyverse", "devtools", "drake", "bookdown", "kableExtra", "here", "reticulate", "furrr", "optparse", "shiny", "rstan"), repos = "https://cran.stat.auckland.ac.nz", Ncpus=parallel::detectCores()-1, dependencies=TRUE)'
