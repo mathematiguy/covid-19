@@ -39,7 +39,7 @@ main <- function() {
             entity = "Observations",
             query_option = "$filter=(
                          ResourceID eq 'CPCOV1' and
-                         Period ge 2021-08-10
+                         Period ge 2021-08-18
                        )
                 &$select=Period,Label1,Value",
             service_api_key = credentials$stats_nz_api_key)) %>%
