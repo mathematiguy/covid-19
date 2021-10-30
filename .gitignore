@@ -4,3 +4,7 @@ research/*
 /credentials.yaml
 **/.ipynb_checkpoints
 **/.#*
+/stan/sir_model.rds
+/_bookdown_files/
+/_book/
+/pandoc.log
