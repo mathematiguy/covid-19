@@ -1,0 +1,211 @@
+---
+title: "Covid-19 analysis"
+author: "Caleb Moses"
+date: "`r format(Sys.Date(), '%d %B %Y')`"
+knit: "bookdown::render_book"
+output:
+  bookdown::gitbook:
+    self_contained: false
+    pandoc_args: ["--verbose", "--log=pandoc.log"]
+documentclass: book
+link-citations: yes
+github-repo: mathematiguy/covid-19
+description: "This report analyses publicly available covid 19 data"
+---
+
+# Building the branching process model
+
+On this page we focus on creating all of the pieces we need to reconstruct the model.
+
+```{r setup}
+
+library(tidyverse)
+
+# Set default ggplot theme
+theme_set(
+    theme_minimal() +
+    theme(plot.title = element_text(hjust = 0.5, size = 15)) +
+    theme(text = element_text(size = 12))
+)
+
+numsims = 1000
+
+```
+
+## Model parameters
+
+We can build each of the model pieces one by one. Once we have the coded up, we can hopefully write an implementation in Stan.
+
+### $Y_l$
+
+$Y_l$ is gamma distributed with a mean of 1 and a variance of $1/k$ for $k$ = 0.5. Hence the variance of $Y_l$ is equal to 2.
+
+```{r Y_l}
+
+Y_l = rgamma(100000, shape=0.5, scale=2)
+
+tibble(Y_l=Y_l) %>%
+    ggplot(aes(x=Y_l)) +
+    geom_density(alpha=0.4, fill='#FF6666') +
+    ggtitle(str_wrap("Distribution of individual level heterogeneity", 50))
+
+cat("The sample mean of Y_l is:", mean(Y_l), '\n')
+cat("The sample variance of Y_l is:", var(Y_l), '\n')
+
+```
+
+### $V_l(t)$
+
+```{r set-vaccine-transmission-effects}
+e_T1 = 0
+e_T2 = 0.5
+```
+
+$V_l(t)$ represents the effect of vaccination on the transmission rate of individual $l$. It depends on 2 values, $e_{T1}$ = `r e_T1` and $e_{T2}$ = `r e_T2`.
+
+```{r V_l}
+
+V_l <- tibble(doses = c(0, 1, 2), eff_transmission = c(1, 1 - e_T1, 1 - e_T2))
+
+V_l %>%
+    mutate(doses = factor(doses)) %>%
+    ggplot(aes(x = doses, y = eff_transmission)) +
+    geom_bar(stat = 'identity', width = 0.01) +
+    geom_point(size=5) +
+    ylim(0,1) +
+    ggtitle(str_wrap('Number of vaccine doses vs vaccine effectiveness against transmission', 50))
+
+```
+
+### $F_l(t)$
+
+$F_l(t)$ represents the effect of quarantine or isolation on the transmission rate of individual $l$ at time $t$.
+
+```{r F_l}
+
+c_quar = 0.5
+c_isol = 0
+
+F_l <- tibble(quarantine = c('Not in quarantine/isolation', 'In quarantine', 'In isolation'), eff_transmission = c(1, c_quar, c_isol))
+
+F_l %>%
+    mutate(quarantine = factor(quarantine)) %>%
+    ggplot(aes(x = quarantine, y = eff_transmission)) +
+    geom_bar(stat = 'identity', width = 0.01) +
+    geom_point(size=5) +
+    ylim(0,1) +
+    ggtitle(str_wrap('Effectiveness against transmission vs Quarantine/Isolation status', 50))
+
+```
+
+### $w(\tau)$
+
+$w(\tau)$ is the probability density function of the assumed generation time distribution and $t_{inf,l}$ is the time individual $l$ was infected. In the absence of interventions, we assume generation times are drawn from a Weibull distribution with mean 5.0 days and s.d. 1.9 days.
+
+```{r w_tau}
+
+# Consider replacing grid search with: https://cran.r-project.org/web/packages/rootSolve/vignettes/rootSolve.pdf
+# Use grid search to find the lambda + k params give us the mean + variance that we want
+## w_scan = tibble(lambda = seq(1, 10, 0.001)) %>%
+##     mutate(k = map(lambda, function(x) seq(1, 10, 0.01))) %>%
+##     unnest(k) %>%
+##     mutate(mean = map2_dbl(lambda, k, function(l, k) l * gamma(1 + 1/k))) %>%
+##     mutate(var = map2_dbl(lambda, k, function(l, k) l^2 * (gamma(1+2/k) - gamma(1+1/k)^2))) %>%
+##     mutate(mean_error = abs(mean - 5),
+##            var_error = abs(var - 1.9 ^ 2),
+##            total_error = (mean_error + var_error) / 2) %>%
+##     arrange(total_error) %>%
+##     head()
+
+w_tau = rweibull(10000, shape = 2.85, scale = 5.604)
+
+tibble(w_tau=w_tau) %>%
+    ggplot(aes(x=w_tau)) +
+    geom_density(alpha=0.4, fill='#FF6666') +
+    ggtitle("Generation time distribution")
+
+cat("The sample mean of w(tau) is:", mean(w_tau), '\n')
+cat("The sample variance of w(tau) is:", var(w_tau), '\n')
+cat("The sample standard deviation of w(tau) is:", sd(w_tau), '\n')
+
+```
+
+### $NGM^{clin}$
+
+$NGM^{clin}$ is the next generation matrix for clinical individuals and $a_l$ is the age group of individual $l$. We use a contact matrix sourced from Prem et al.
+
+```{r build-ngm-matrix}
+
+# Age group labels
+age_groups = c("0-4", "5-9", "10-14", "15-19", "20-24", "25-29", "30-34", "35-39", "40-44",
+               "45-49", "50-54", "55-59", "60-64", "65-69", "70-74", "75+")
+
+# Get Age specific model parameters
+age_params <- read_csv(here('data/age_specific_parameters.csv')) %>%
+    gather(`0-4`:`75+`, key = 'Age_Group', value = 'Value') %>%
+    spread(key = Age, value = Value) %>%
+    mutate(Age_Group = factor(Age_Group, levels = age_groups)) %>%
+    arrange(Age_Group)
+
+# Grab variables necessary for NGM matrix calculation
+p_clin = age_params$`Pr(clinical)`
+u = age_params$Susceptibility
+N = age_params$`% of popn`
+
+# Load the contact matrix
+M <- here('data/contact_matrix.csv') %>%
+    read_csv() %>%
+    as.matrix()
+
+# Build the NGM matrix
+R_0 = 6.0
+tau = 0.5
+NGM = matrix(0, dim(M)[2], dim(M)[1])
+for (i in 1:16) {
+    for (j in 1:16) {
+        NGM[i,j] = ( p_clin[j] + tau * (1 - p_clin[j]) ) * u[i] * (M[i,j] + N[j] / N[i] * M[j,i]) / 2
+    }
+}
+NGM <- NGM * (R_0 / max(eigen(NGM)$values))
+colnames(NGM) <- age_groups
+
+# Display the matrix as a heatmap
+NGM  %>%
+    as_tibble() %>%
+    mutate(Age_Group_1 = age_groups) %>%
+    gather(`0-4`:`75+`, key = "Age_Group_2", value = "Contact Rate") %>%
+    mutate(Age_Group_1 = factor(Age_Group_1, levels = age_groups),
+           Age_Group_2 = factor(Age_Group_2, levels = age_groups)) %>%
+    ggplot(aes(x = Age_Group_2, y = Age_Group_1, fill = `Contact Rate`)) +
+    geom_tile() +
+    ggtitle("Next generation matrix by age group") +
+    xlab("") +
+    ylab("") +
+    theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+
+```
+
+### $s_j(t)$
+
+$s_j(t)$ is the fraction of age group $j$ that is susceptible at time $t$
+
+```{r s_j, echo=TRUE}
+
+s <- function(j, e_I1, e_I2, c_1, c_2, N, N_tot) {
+    # e_I1, e_I2 is the effectiveness of the vaccine against infection after 1 and 2 doses respectively
+    # c_1, c_2 is the fraction of age group j that has received d effective doses of the vaccine at time t
+    # N is the cumulative number of infections in age group j
+    # N_tot is the total size of age group j
+    return(1 - e_I1*c_1 - e_I2*c_2 - N / N_tot)
+}
+
+```
+
+## Prior predictive check
+
+Now that we have each piece of the model built, we can perform a 'prior predictive check'. That is, we can sample from the prior distribution for the model to see what the results look like.
+
+
+```{r}
+
+```

@@ -2,3 +2,4 @@ rmd_files:
   - report/index.Rmd
   - report/01-introduction.Rmd
   - report/02-tpm-model.Rmd
+  - report/03-branching-process-model.Rmd

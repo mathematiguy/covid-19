@@ -34,8 +34,7 @@ individual heterogeneity in transmission. We set $k$ = 0.5 which represents a mo
 - $V_l(t)$ represents the effect of vaccination on the transmission rate of individual $l$, and is equal to 1, 1 − $e_{T1}$, or 1 − $e_{T2}$ if individual $l$ is unvaccinated, has had one dose, or has had two doses respectively at time $t$.
 - $F_l(t)$ represents the effect of quarantine or isolation on the transmission rate of individual $l$ at time $t$, and is equal to 1 if individual $l$ is not in quarantine/isolation at time $t$, equal to $c_{quar}$ = 0.5 if individual $l$ is in quarantine, and equal to $c_{isol}$ if individual $l$ is in isolation.
 - $w(\tau)$ is the probability density function of the assumed generation time distribution and $t_{inf,l}$ is the time individual $l$ was infected
-- $NGM^{clin}$ is the next generation matrix for clinical individuals and $a_l$ is the age group 
-of individual $l$.
+- $NGM^{clin}$ is the next generation matrix for clinical individuals and $a_l$ is the age group of individual $l$.
 - $s_j(t)$ is the fraction of age group $j$ that is susceptible at time $t$, defined by: $$ s_j(t) = 1 - e_{l1}c_{j1}(t) - e_{l2}c_{j2}(t) - \frac{N_j(t)}{N_{j,tot}} $$ where $c_{jd}(t)$ is the fraction of age group $j$ that has received $d$ effective doses of the vaccine at time $t$, $N_j(t)$ is the cumulative number of infections in age group $j$ at time $t$ and $N_{j,tot}$ is the total size of age group $j$.
 
 ### Vaccination status
