@@ -3,3 +3,4 @@ jupyter
 jupyterlab
 pandas
 matplotlib
+click
