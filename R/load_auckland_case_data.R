@@ -20,8 +20,12 @@ main <- function() {
     opt_parser = OptionParser(option_list=option_list);
     opt = parse_args(opt_parser);
 
-    # Load API credentials
-    credentials = read_yaml(here('credentials.yaml'))
+    if (file.exists(here(opt$credentials))) {
+        # Load API credentials
+        credentials = read_yaml(opt$credentials)
+    } else {
+        credentials = list(stats_nz_api_key=Sys.getenv("STATS_NZ_API_KEY"))
+    }
 
     # Load the auckland case data from the nz-covid19-data-auto github repo
     cases_by_dhb_over_time <- read_csv(here(opt$case_data))
