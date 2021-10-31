@@ -27,8 +27,6 @@ source(here('R/get_odata_fun.R'), local=TRUE)
 source(here('R/get_odata_catalogue_fun.R'), local=TRUE)
 options(tibble.width = Inf, mc.cores = parallel::detectCores()-1)
 
-credentials = read_yaml(here('credentials.yaml'))
-
 # Set default ggplot theme
 theme_set(
     theme_minimal() +
