@@ -25,6 +25,11 @@ data/auckland_cases.csv: R/load_auckland_case_data.R nz-covid19-data-auto/cases_
 replicate:
 	$(RUN) julia replicate.jl
 
+update: nz-covid19-data-auto/cases_by_DHB_over_time.csv
+nz-covid19-data-auto/cases_by_DHB_over_time.csv:
+	(cd nz-covid19-data-auto && git pull)
+	$(RUN) bash -c 'cd nz-covid19-data-auto && python3 build_cases_by_dhb_over_time.py'
+
 report: _book/_main.html
 _book/_main.html: report/index.Rmd stan/sir_model.rds
 	$(RUN) Rscript -e 'bookdown::render_book("$<")'
@@ -54,7 +59,7 @@ r_shell:
 	$(RUN) R
 
 clean:
-	rm _main.Rmd
+	rm _main.Rmd stan/sir_model.rds
 	find . -name '*backup*.jl' | xargs -I{} rm "{}"
 
 docker:
