@@ -26,7 +26,6 @@ main <- function() {
 
     # Select a subsample of data where it looks like an SIR model would apply
     sir_data <- auckland_cases %>%
-        filter(Date < as.Date('2021-09-21')) %>%
         mutate(S = 5000000 - Total,
                I = Active,
                R = Recovered + Deceased) %>%
@@ -39,7 +38,7 @@ main <- function() {
     N <- 5000000;
 
     # times
-    n_days <- as.numeric(sir_data$Date[nrow(sir_data)] - sir_data$Date[1])
+    n_days <- as.integer(max(sir_data$Date) - min(sir_data$Date) + 1)
     t <- seq(0, n_days, by = 1)
     t0 = 0
     t <- t[-1]
