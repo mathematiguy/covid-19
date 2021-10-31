@@ -8,3 +8,4 @@ research/*
 /_bookdown_files/
 /_book/
 /pandoc.log
+/_main.Rmd
