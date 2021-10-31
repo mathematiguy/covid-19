@@ -27,7 +27,7 @@ main <- function() {
     cases_by_dhb_over_time <- read_csv(here(opt$case_data))
 
     auckland_cases <- cases_by_dhb_over_time %>%
-        filter(DHB=='Auckland' & Date > as.Date('2021-08-18')) %>%
+        filter(DHB=='Auckland' & Date >= as.Date('2021-08-18')) %>%
         select(-DHB)
 
     # Get the testing data from the Stats NZ open data api
