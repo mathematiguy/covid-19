@@ -51,9 +51,9 @@ $$
 \end{align*}
 $$
 
-This models the effect of the vaccine as completely immunising a randomly selected fraction $e_{ld}$  of  individuals  with $d$ doses  and  leaving  the  remaining  fraction $1-e_{ld}$ completely susceptible. This is known as an all-or-nothing vaccine model and is a simplification of the effect of vaccination on susceptibility to infection.
+This models the effect of the vaccine as completely immunising a randomly selected fraction $e_{ld}$ of individuals with $d$ doses and leaving the remaining fraction $1-e_{ld}$ completely susceptible. This is known as an all-or-nothing vaccine model and is a simplification of the effect of vaccination on susceptibility to infection.
 
-An alternative model formulation is a leaky  vaccine  model,  where  all  vaccinated  individuals  have  their  probability  of  infection reduced by $e_l$. Reality is likely to be somewhere between these idealised models (i.e. there is some individual heterogeneity in the level of protection provided by the vaccine but not as extreme as all-or-nothing).
+An alternative model formulation is a leaky vaccine model, where all vaccinated individuals have their probability of infection reduced by $e_l$. Reality is likely to be somewhere between these idealised models (i.e. there is some individual heterogeneity in the level of protection provided by the vaccine but not as extreme as all-or-nothing).
 
 However, the all-or-nothing and the leaky vaccine model behave similarly when the proportion of the population with immunity from prior infection is relatively small. Waning of immunity from either vaccination or from prior infection is ignored. 
 
@@ -66,7 +66,7 @@ susceptible population:
 
 $$ NGM_ij = U( p_{clin,j} + \tau (1 - p_{clin,j})) \cdot u_i M_{j,i} $$
 
-where $u_i$ is the relative susceptibility to infection of age group  $i$, $M$ is a contact matrix 
+where $u_i$ is the relative susceptibility to infection of age group $i$, $M$ is a contact matrix 
 describing mixing rates between and within age groups, $U$ is a constant representing the 
 intrinsic transmissibility of the virus. The basic reproduction number $R_0$ is equal to the 
 dominant eigenvalue of the next generation matrix, denoted $\rho(NGM)$. The value of $U$ is 
