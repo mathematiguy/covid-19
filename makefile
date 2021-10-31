@@ -59,7 +59,7 @@ r_shell:
 	$(RUN) R
 
 clean:
-	rm _main.Rmd stan/sir_model.rds
+	rm -f _main.Rmd stan/sir_model.rds
 	find . -name '*backup*.jl' | xargs -I{} rm "{}"
 
 docker:

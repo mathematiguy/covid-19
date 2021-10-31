@@ -1,2 +1,3 @@
 docker: mathematiguy/covid-19:6010cc9
 publish: covid-19
+cpus: 4
