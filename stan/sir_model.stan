@@ -53,7 +53,7 @@ transformed parameters{
 model {
   //priors
   beta ~ normal(2, 1); //truncated at 0
-  gamma ~ normal(0.2, 0.15); //truncated at 0
+  gamma ~ normal(0.4, 0.5); //truncated at 0
   phi_inv ~ exponential(5);
 
   //sampling distribution
