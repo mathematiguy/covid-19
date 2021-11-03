@@ -1,4 +1,4 @@
----
+.---
 title: "Covid-19 analysis"
 author: "Caleb Moses"
 date: "`r format(Sys.Date(), '%d %B %Y')`"
@@ -19,6 +19,9 @@ On this page we focus on creating all of the pieces we need to reconstruct the m
 
 ```{r setup}
 
+library(here)
+library(MASS)    # For multivariate normal sampling
+library(lmomco)  # For weibull cdf function
 library(tidyverse)
 
 # Set default ggplot theme
@@ -29,6 +32,8 @@ theme_set(
 )
 
 numsims = 1000
+
+auckland_cases = read_csv(here('data/auckland_cases.csv'))
 
 ```
 
@@ -51,6 +56,63 @@ tibble(Y_l=Y_l) %>%
 
 cat("The sample mean of Y_l is:", mean(Y_l), '\n')
 cat("The sample variance of Y_l is:", var(Y_l), '\n')
+
+```
+
+### $C(t)$
+
+$C(t)$ is a time-varying control parameter that is fitted to data.
+
+For simplicity, we model $𝐶(𝑡)$ as a piecewise constant function: $𝐶(𝑡)$ = $\theta$ = when $t_{k-1} \leq t < t_k$  corresponding to 18 August 2021 (the first day of alert level 4) and $t_2$, ..., $t_7$ increasing in 7-day increments
+
+We use a truncated Gaussian random field as the prior for $\theta = [\theta_1, \theta_2, ..., \theta_K]$. The multivariate normal distribution has mean $\mu = [1, 0.5, ... ,0.5]$, and covariance matrix $\Sigma = DCD$, where $D$ is a diagonal matrix of standard deviations with elements $D_{kk} = [0.2, 0.5, … , 0.5]$ and $C_{kl} = exp(−(𝑘 − 𝑙)^2 / 2𝐿^2 )$ is the
+correlation matrix.
+
+We construct the matrix and display the matrix values in the tile plot below:
+
+```{r}
+
+start_date <- min(auckland_cases$Date)
+num_weeks <- ceiling(as.numeric(max(auckland_cases$Date) - min(auckland_cases$Date)) / 7)
+
+L = 0.5
+mu <- c(1.0, rep(0.5, num_weeks-1))
+D <- diag(c(0.2, rep(0.5, num_weeks-1)))
+C <- matrix(0, num_weeks, num_weeks)
+
+for (i in 1:num_weeks) {
+    for (j in 1:num_weeks) {
+        C[i,j] = exp(-(i-j)^2 / (2 * L ^ 2))
+    }
+}
+
+Sigma <- D %*% C %*% D
+
+Sigma %>%
+    as_tibble() %>%
+    mutate(row = 1:nrow(.)) %>%
+    gather(starts_with("V"), key = 'column', value = 'value') %>%
+    mutate(column = as.integer(str_remove(column, "V"))) %>%
+    mutate(value = value) %>%
+    ggplot(aes(x = row, y = column, fill = value)) +
+    geom_tile()
+
+```
+
+Then we can plot realisations from the gaussian random field:
+
+```{r}
+
+mvrnorm(3000, mu, Sigma) %>%
+    as_tibble() %>%
+    mutate(row = 1:nrow(.)) %>%
+    gather(starts_with("V"), key = 'column', value = 'value') %>%
+    mutate(column = as.integer(str_remove(column, "V"))) %>%
+    mutate(date = map(column, function(x) seq(start_date + (x - 1) * 7, by = "day", length.out = 7))) %>%
+    unnest(date) %>%
+    filter(value > 0) %>%
+    ggplot(aes(x = date, y = value, group = row)) +
+    geom_step(alpha = 0.1)
 
 ```
 
@@ -191,20 +253,71 @@ $s_j(t)$ is the fraction of age group $j$ that is susceptible at time $t$
 
 ```{r s_j, echo=TRUE}
 
-s <- function(j, e_I1, e_I2, c_1, c_2, N, N_tot) {
+s <- function(j, c_1, c_2, N, N_tot) {
     # e_I1, e_I2 is the effectiveness of the vaccine against infection after 1 and 2 doses respectively
     # c_1, c_2 is the fraction of age group j that has received d effective doses of the vaccine at time t
     # N is the cumulative number of infections in age group j
     # N_tot is the total size of age group j
+
+    e_I1 = 0.55
+    e_I2 = 0.7
+
     return(1 - e_I1*c_1 - e_I2*c_2 - N / N_tot)
 }
+
+```
+
+## Calculating the number of infected
+
+### For one time step, one individual of a given age group
+
+```{r}
+
+age_params <- read_csv(here('data/age_specific_parameters.csv'))
+age_groups <- 16
+
+# Total population of NZ
+N_pop <- 5000000
+
+# Number of infections by age group
+N_inf <- rep(1, 16)
+
+# Total proportion of the population by age group
+N_tot <- age_params %>%
+    filter(Age == '% of popn') %>%
+    dplyr::select(-Age) %>%
+    mutate_all(function(x) x / 100) %>%
+    as.numeric()
+
+c_1 = 0.88                           # Effectiveness of vaccine against infection after 1 dose
+c_2 = 0.7                            # Effectiveness of vaccine against infection after 2 doses
+
+a_l = 3                              # Age group of individual l
+t = 4                                # Current time step
+t_inf = 1                            # Time of infection
+
+Y_l = rgamma(1, shape=0.5, scale=2)  # Individual heterogeneity
+C = mvrnorm(1, mu, Sigma)            # Time varying control parameter
+
+V <- 1 - e_T2                        # Double vaccinated
+F = 1.0                              # Not in quarantine
+w = pweibull(t, shape = 2.85, scale = 5.604) - pweibull(t_inf, shape = 2.85, scale = 5.604)
+
+# Calculate the expected number of infections by individual l
+lambda <- Y_l * C[t] * V * F * w * NGM[, a_l] * s(a_l, c_1, c_2, N_inf, N_pop)
+
+# Simulate cases from individual l
+cases = rep(0, age_groups)
+for (i in age_groups) {
+    cases[i] = sum(rpois(N_pop * N_tot, lambda[i]))
+}
+cases
 
 ```
 
 ## Prior predictive check
 
 Now that we have each piece of the model built, we can perform a 'prior predictive check'. That is, we can sample from the prior distribution for the model to see what the results look like.
-
 
 ```{r}
 

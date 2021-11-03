@@ -1,4 +1,4 @@
-docker: mathematiguy/covid-19:6010cc9
+docker: mathematiguy/covid-19:e5c09fa
 publish: covid-19
 cpus: 4
 memory: 8

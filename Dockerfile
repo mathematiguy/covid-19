@@ -84,3 +84,4 @@ RUN apt install -y r-base
 ENV DOWNLOAD_STATIC_LIBV8=1
 ENV LC_ALL=C.UTF-8
 RUN Rscript -e 'install.packages(c("tidyverse", "devtools", "drake", "bookdown", "kableExtra", "here", "reticulate", "furrr", "optparse", "shiny", "rstan"), repos = "https://cran.stat.auckland.ac.nz", Ncpus=parallel::detectCores()-1, dependencies=TRUE)'
+RUN Rscript -e 'install.packages("lmomco")'

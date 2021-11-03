@@ -119,4 +119,27 @@ stan_dens(fit_sir_negbin, pars = pars, separate_chains = TRUE)
 
 ```
 
+```{r plot-simulations}
+
+cases <- rstan::extract(fit_sir_negbin, 'y')[[1]] %>%
+    as_tibble() %>%
+    mutate(sim = 1:4000) %>%
+    as_tibble() %>%
+    gather(-sim, key = 'variable', value = 'count') %>%
+    separate(variable, into=c('timestep', 'compartment'), sep='\\.') %>%
+    mutate(timestep = as.numeric(timestep),
+           compartment = as.numeric(compartment)) %>%
+    mutate(compartment = case_when(
+           compartment == 1 ~ 'Susceptible',
+           compartment == 2 ~ 'Infected',
+           compartment == 3 ~ 'Removed'))
+
+cases %>%
+    ggplot(aes(x = timestep, y = count, colour = compartment, group = sim)) +
+    geom_line(alpha = 0.1) +
+    facet_wrap(~compartment, scales='free_y', ncol=1) +
+    guides(colour=FALSE)
+
+```
+
 This model is not a very good fit!
