@@ -10,3 +10,4 @@ research/*
 /pandoc.log
 /_main.Rmd
 _main_files/
+.Rhistory
