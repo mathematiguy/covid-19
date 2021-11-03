@@ -1,4 +1,4 @@
-.---
+---
 title: "Covid-19 analysis"
 author: "Caleb Moses"
 date: "`r format(Sys.Date(), '%d %B %Y')`"
